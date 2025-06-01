@@ -1,15 +1,17 @@
-name: Generate Stats and Push
+name: Generate GitHub Stats SVG
 
 on:
-  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *' # Ejecuta todos los días a medianoche UTC
+  workflow_dispatch:  # Permite ejecución manual
 
 jobs:
-  generate-and-push:
+  build:
     runs-on: ubuntu-latest
+
     steps:
-    - uses: actions/checkout@v3
-      with:
-        persist-credentials: false  # importante para controlar el token
+    - name: Checkout repo
+      uses: actions/checkout@v3
 
     - name: Setup Node.js
       uses: actions/setup-node@v3
@@ -19,18 +21,14 @@ jobs:
     - name: Install dependencies
       run: npm install
 
-    - name: Generate stats HTML
-      run: node get-stats.js
-
-    - name: Configure Git
-      run: |
-        git config user.name "github-actions"
-        git config user.email "github-actions@github.com"
-
-    - name: Commit and push stats.html
-      run: |
-        git add stats.html
-        git commit -m "Update stats.html from workflow" || echo "No changes to commit"
-        git push origin HEAD:main
+    - name: Generate SVG stats
       env:
         GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      run: node generate-stats-svg.js
+
+    - name: Commit and push SVG
+      uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: "Update GitHub stats SVG"
+        file_pattern: "docs/stats.svg"
+        branch: main
