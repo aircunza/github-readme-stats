@@ -2,8 +2,8 @@ name: Generate GitHub Stats Badge
 
 on:
   schedule:
-    - cron: "0 0 * * *" # Corre cada día a medianoche
-  workflow_dispatch:
+    - cron: "0 0 * * *"  # Ejecuta todos los días a la medianoche
+  workflow_dispatch:      # Permite ejecución manual desde GitHub UI
 
 jobs:
   build:
@@ -13,7 +13,7 @@ jobs:
     - name: Checkout repo
       uses: actions/checkout@v3
       with:
-        persist-credentials: false  # clave para usar GH_TOKEN personalizado
+        persist-credentials: false  # Necesario para usar GITHUB_TOKEN personalizado
 
     - name: Setup Node.js
       uses: actions/setup-node@v3
@@ -25,18 +25,19 @@ jobs:
 
     - name: Generate stats SVG
       env:
-        GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        GH_TOKEN: ${{ secrets.GH_TOKEN }}  # Tu token personal (PAT), no GITHUB_TOKEN
       run: npm run start
 
-    - name: List files in root (debug)
-      run: ls -l
-
-    - name: Commit and push changes
-      env:
-        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+    - name: Configure Git
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
+
+    - name: Commit and Push SVG
+      run: |
         git add stats.svg
         git commit -m "Update GitHub stats [skip ci]" || echo "No changes to commit"
+        git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
         git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
