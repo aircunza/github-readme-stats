@@ -26,7 +26,7 @@ async function getAllRepos() {
   return repos;
 }
 
-async function getRepoStats(owner: string, repo: string) {
+async function getRepoStats(owner, repo) {
   const commitsResp = await octokit.rest.repos.listCommits({
     owner,
     repo,
@@ -58,6 +58,7 @@ async function getRepoStats(owner: string, repo: string) {
 
   return { commits, prs, issues };
 }
+
 
 async function main() {
   const owner = await getAuthenticatedUsername();
