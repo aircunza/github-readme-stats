@@ -2,38 +2,34 @@ name: Update GitHub Stats SVG
 
 on:
   schedule:
-    - cron: '0 0 * * *'   # cada día a medianoche (ajusta a tu gusto)
-  workflow_dispatch:
+    - cron: "0 0 * * *"  # Corre cada día a medianoche UTC
+  workflow_dispatch:     # Permite correr manualmente
 
 jobs:
-  update-stats:
+  build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
-        with:
-          persist-credentials: false  # importante para usar token personalizado
+      - uses: actions/checkout@v3
 
-      - name: Setup Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
-      - name: Run stats script
+      - name: Generate stats SVG
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: node get-stats.js
 
-      - name: Commit and push changes
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # este token automático
+      - name: Commit and push SVG
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/stats.svg
+          git add stats.svg
           git commit -m "Update GitHub stats [skip ci]" || echo "No changes to commit"
-          git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }} HEAD:${{ github.ref }}
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
