@@ -1,11 +1,11 @@
 {
-  "name": "github-readme-stats",
+  "name": "github-stats-badge",
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "start": "node get-stats.js"
+    "generate-stats": "node get-stats.js"
   },
   "dependencies": {
-    "octokit": "^2.0.0"
+    "octokit": "^3.10.0"
   }
 }
