@@ -5,6 +5,11 @@ const octokit = new Octokit({
   auth: process.env.GH_TOKEN,
 });
 
+async function getAuthenticatedUsername() {
+  const { data } = await octokit.rest.users.getAuthenticated();
+  return data.login;
+}
+
 async function getAllRepos(owner) {
   let repos = [];
   let page = 1;
@@ -22,17 +27,15 @@ async function getAllRepos(owner) {
 }
 
 async function getRepoStats(owner, repo) {
-  // commits count
   const commitsResp = await octokit.rest.repos.listCommits({
     owner,
     repo,
     per_page: 1,
   });
   const commits = commitsResp.headers.link
-    ? Number(commitsResp.headers.link.match(/&page=(\d+)>; rel="last"/)[1])
+    ? Number(commitsResp.headers.link.match(/&page=(\d+)>; rel="last"/)?.[1] ?? 1)
     : commitsResp.data.length;
 
-  // PRs total
   const prsResp = await octokit.rest.pulls.list({
     owner,
     repo,
@@ -40,10 +43,9 @@ async function getRepoStats(owner, repo) {
     state: "all",
   });
   const prs = prsResp.headers.link
-    ? Number(prsResp.headers.link.match(/&page=(\d+)>; rel="last"/)[1])
+    ? Number(prsResp.headers.link.match(/&page=(\d+)>; rel="last"/)?.[1] ?? 1)
     : prsResp.data.length;
 
-  // Issues total (incluye issues abiertos y cerrados)
   const issuesResp = await octokit.rest.issues.listForRepo({
     owner,
     repo,
@@ -51,14 +53,14 @@ async function getRepoStats(owner, repo) {
     state: "all",
   });
   const issues = issuesResp.headers.link
-    ? Number(issuesResp.headers.link.match(/&page=(\d+)>; rel="last"/)[1])
+    ? Number(issuesResp.headers.link.match(/&page=(\d+)>; rel="last"/)?.[1] ?? 1)
     : issuesResp.data.length;
 
   return { commits, prs, issues };
 }
 
 async function main() {
-  const owner = "tu_usuario"; // Cambia esto por tu usuario GitHub
+  const owner = await getAuthenticatedUsername(); // reemplaza si quieres usar tu usuario directo
   const repos = await getAllRepos(owner);
 
   let totalCommits = 0;
@@ -81,7 +83,10 @@ async function main() {
   </svg>`;
 
   fs.writeFileSync("stats.svg", svg);
-  console.log("SVG stats file generated!");
+  console.log("✅ SVG stats file generated!");
 }
 
-main().catch(console.error);
+main().catch(err => {
+  console.error("❌ Error generating stats:", err);
+  process.exit(1);
+});
