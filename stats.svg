@@ -18,7 +18,7 @@
     <circle class="icon" cx="10" cy="6" r="6" />
     <path d="M7 5 L10 10 L13 5 Z" fill="#1EBC6B" />
     <text class="label" x="30" y="10">Total Commits:</text>
-    <text class="value" x="180" y="10" text-anchor="end">832</text>
+    <text class="value" x="180" y="10" text-anchor="end">836</text>
   </g>
 
   <g transform="translate(30, 90)">
@@ -32,7 +32,7 @@
     <circle class="icon" cx="10" cy="6" r="6" />
     <path d="M8 5 L12 5 L10 9 Z" fill="#1EBC6B"/>
     <text class="label" x="30" y="10">Total PRs:</text>
-    <text class="value" x="180" y="10" text-anchor="end">25</text>
+    <text class="value" x="180" y="10" text-anchor="end">26</text>
   </g>
 
   <!-- Moved circle to x=345 for margin -->
