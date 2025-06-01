@@ -1,34 +1,44 @@
-name: Generate GitHub Stats SVG
+name: Generate GitHub Stats
 
 on:
-  schedule:
-    - cron: '0 0 * * *' # Ejecuta todos los días a medianoche UTC
-  workflow_dispatch:  # Permite ejecución manual
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
-  build:
+  generate-stats:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repo
-      uses: actions/checkout@v3
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false  # Evita bucles con commits del workflow
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: 18
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
 
-    - name: Install dependencies
-      run: npm install
+      - name: Install dependencies
+        run: npm install
+        working-directory: ./  # Ajusta si tu package.json está en otra carpeta
 
-    - name: Generate SVG stats
-      env:
-        GH_TOKEN: ${{ secrets.GH_TOKEN }}
-      run: node generate-stats-svg.js
+      - name: Run get-stats script
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: node get-stats.js
+        working-directory: ./  # Ajusta si el script está en otra carpeta
 
-    - name: Commit and push SVG
-      uses: stefanzweifel/git-auto-commit-action@v4
-      with:
-        commit_message: "Update GitHub stats SVG"
-        file_pattern: "docs/stats.svg"
-        branch: main
+      - name: Commit and push stats file(s)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add stats.html docs/stats.svg || echo "No new files to commit"
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update GitHub stats [skip ci]"
+            git push
+          fi
