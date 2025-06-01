@@ -2,11 +2,11 @@ name: Update GitHub Stats
 
 on:
   schedule:
-    - cron: '0 */6 * * *'  # Cada 6 horas
-  workflow_dispatch:       # Para ejecutarlo manualmente
+    - cron: '0 0 * * *'  # Corre todos los días a medianoche UTC
+  workflow_dispatch:    # Permite ejecutarlo manualmente
 
 jobs:
-  update-stats:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -25,8 +25,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: node get-stats.js
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public
+      - name: Commit and push stats.json
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add stats.json
+          git commit -m "Update GitHub stats"
+          git push
+        continue-on-error: true
