@@ -3,7 +3,7 @@ name: Update GitHub Stats
 on:
   schedule:
     - cron: '0 0 * * *'  # Corre todos los días a medianoche UTC
-  workflow_dispatch:
+  workflow_dispatch:    # Permite ejecutarlo manualmente
 
 jobs:
   build:
@@ -11,8 +11,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -24,14 +22,15 @@ jobs:
 
       - name: Run stats script
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_PAT }}   # Usa tu PAT aquí
         run: node get-stats.js
 
-      - name: Commit and push updated stats.html
+      - name: Commit and push stats.html
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}     # Usa PAT para autenticación git
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git add stats.html
-          git commit -m "Update GitHub stats page"
-          git push origin main
-        continue-on-error: true
+          git commit -m "Update GitHub stats page" || echo "No changes to commit"
+          git push https://x-access-token:${GH_PAT}@github.com/${{ github.repository }} HEAD:main
