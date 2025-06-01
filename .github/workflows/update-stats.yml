@@ -1,20 +1,19 @@
-name: Generate GitHub Stats
+name: Update GitHub Stats SVG
 
 on:
-  push:
-    branches:
-      - main
+  schedule:
+    - cron: '0 0 * * *'   # cada día a medianoche (ajusta a tu gusto)
   workflow_dispatch:
 
 jobs:
-  generate-stats:
+  update-stats:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
         with:
-          persist-credentials: false  # Evita bucles con commits del workflow
+          persist-credentials: false  # importante para usar token personalizado
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -22,23 +21,19 @@ jobs:
           node-version: 18
 
       - name: Install dependencies
-        run: npm install
-        working-directory: ./  # Ajusta si tu package.json está en otra carpeta
+        run: npm ci
 
-      - name: Run get-stats script
+      - name: Run stats script
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: node get-stats.js
-        working-directory: ./  # Ajusta si el script está en otra carpeta
 
-      - name: Commit and push stats file(s)
+      - name: Commit and push changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # este token automático
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add stats.html docs/stats.svg || echo "No new files to commit"
-          if git diff --cached --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "Update GitHub stats [skip ci]"
-            git push
-          fi
+          git add docs/stats.svg
+          git commit -m "Update GitHub stats [skip ci]" || echo "No changes to commit"
+          git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }} HEAD:${{ github.ref }}
