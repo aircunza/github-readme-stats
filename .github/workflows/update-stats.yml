@@ -16,8 +16,8 @@ jobs:
         run: echo "GH_TOKEN length is ${#GH_TOKEN}"
 
       - name: Test GitHub API with PAT
-        run: curl -H "Authorization: token $GH_TOKEN" https://api.github.com/user
-
+        run: "curl -H \"Authorization: token $GH_TOKEN\" https://api.github.com/user"
+        
       - name: Make a test change and push
         run: |
           git config user.name "github-actions"
