@@ -1,35 +1,30 @@
-name: Update GitHub Stats
+name: Test GitHub Token Permissions
 
 on:
-  schedule:
-    - cron: '0 0 * * *'  # Corre todos los días a medianoche UTC
-  workflow_dispatch:    # Permite ejecutarlo manualmente
+  workflow_dispatch:
 
 jobs:
-  build:
+  test-token:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repo
+        uses: actions/checkout@v3
 
-      - name: Setup Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: '18'
 
       - name: Install dependencies
         run: npm install octokit
 
-      - name: Run stats script
+      - name: Run get-stats.js (show stats output)
+        run: node get-stats.js
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: node get-stats.js
 
-      - name: Commit and push stats.json
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git add stats.json
-          git commit -m "Update GitHub stats"
-          git push
-        continue-on-error: true
+      - name: Run push-test.js (test push permission)
+        run: node push-test.js
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
