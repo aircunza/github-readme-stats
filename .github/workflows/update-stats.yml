@@ -4,32 +4,32 @@ on:
   workflow_dispatch:
 
 jobs:
-  update-readme:
+  update-stats:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
         with:
-          persist-credentials: false
+          persist-credentials: false  # clave para usar GH_TOKEN personalizado
 
-      - name: Set up Git config
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run stats script
+        run: node get-stats.js
+
+      - name: Commit & push changes
         run: |
           git config user.name "aircunza"
           git config user.email "aircunza@users.noreply.github.com"
-
-      - name: Generate stats
-        run: |
-          echo "## 🔥 Stats updated on $(date)" > STATS.md
-          echo "" >> STATS.md
-          echo "- Total repos: $(curl -s -H "Authorization: token ${GH_TOKEN}" https://api.github.com/users/aircunza | jq '.public_repos')" >> STATS.md
-          echo "- Followers: $(curl -s -H "Authorization: token ${GH_TOKEN}" https://api.github.com/users/aircunza | jq '.followers')" >> STATS.md
-          echo "- Following: $(curl -s -H "Authorization: token ${GH_TOKEN}" https://api.github.com/users/aircunza | jq '.following')" >> STATS.md
-
-      - name: Commit & push if changed
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: |
           git remote set-url origin https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}
-          git add STATS.md
+          git add stats.html
           git commit -m "📊 Update GitHub stats" || echo "No changes to commit"
           git push
