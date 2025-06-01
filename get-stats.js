@@ -1,14 +1,19 @@
 import { Octokit } from "octokit";
 import fs from "fs";
 
-const octokit = new Octokit({
-  auth: process.env.GH_TOKEN,
+const octokitRead = new Octokit({
+  auth: process.env.GH_PAT_READ,
 });
+
+// Si quieres hacer operaciones con escritura, usarías:
+// const octokitWrite = new Octokit({
+//   auth: process.env.GH_PAT_WRITE,
+// });
 
 async function getRepoStats(owner, repo) {
   try {
     // Verificar commits
-    const commits = await octokit.rest.repos.listCommits({
+    const commits = await octokitRead.rest.repos.listCommits({
       owner,
       repo,
       per_page: 1,
@@ -20,7 +25,7 @@ async function getRepoStats(owner, repo) {
     }
 
     // Obtener estadísticas básicas
-    const { data: repoData } = await octokit.rest.repos.get({
+    const { data: repoData } = await octokitRead.rest.repos.get({
       owner,
       repo,
     });
@@ -47,9 +52,8 @@ async function getRepoStats(owner, repo) {
 }
 
 async function main() {
-  // Cambia estos por tu usuario y repos si quieres:
   const owner = "aircunza";
-  const repos = ["github-readme-stats"];  // Puedes listar más repos aquí
+  const repos = ["github-readme-stats"];  // Lista tus repos aquí
 
   const statsList = [];
 
@@ -60,7 +64,6 @@ async function main() {
     }
   }
 
-  // Generar HTML básico con la info
   let html = `<!DOCTYPE html>
 <html lang="es">
 <head>
