@@ -28,6 +28,9 @@ jobs:
         GH_TOKEN: ${{ secrets.GH_TOKEN }}
       run: npm run start
 
+    - name: List files in root (debug)
+      run: ls -l
+
     - name: Commit and push changes
       env:
         GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
