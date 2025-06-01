@@ -2,36 +2,34 @@ name: Update GitHub Stats
 
 on:
   schedule:
-    - cron: '0 * * * *'  # Ejecuta cada hora
-  workflow_dispatch:      # Permite ejecución manual
+    - cron: '0 0 * * *'  # Corre todos los días a medianoche UTC
+  workflow_dispatch:    # Permite ejecutarlo manualmente
 
 jobs:
-  update-stats:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Set up Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: 18
 
       - name: Install dependencies
         run: npm install octokit
 
-      - name: Generate stats.html
+      - name: Run stats script
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: node get-stats.js
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
-      - name: Commit and push changes
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      - name: Commit and push stats.json
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git add stats.html
-          git commit -m "Update GitHub stats page" || echo "No changes to commit"
-          git push https://x-access-token:${GH_TOKEN}@github.com/aircunza/github-readme-stats.git HEAD:main
+          git add stats.json
+          git commit -m "Update GitHub stats"
+          git push
+        continue-on-error: true
