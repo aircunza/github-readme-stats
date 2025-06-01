@@ -2,12 +2,13 @@ name: Update GitHub Stats
 
 on:
   schedule:
-    - cron: '0 * * * *'  # cada hora, por ejemplo
-  workflow_dispatch:
+    - cron: '0 * * * *'  # Ejecuta cada hora
+  workflow_dispatch:      # Permite ejecución manual
 
 jobs:
   update-stats:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
@@ -23,7 +24,7 @@ jobs:
       - name: Generate stats.html
         run: node get-stats.js
         env:
-          GH_PAT_READ: ${{ secrets.GH_PAT_READ }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Commit & push changes
         run: |
@@ -31,7 +32,7 @@ jobs:
           git config user.email "github-actions@github.com"
           git add stats.html
           git commit -m "Update GitHub stats page" || echo "No changes to commit"
-          git remote set-url origin https://x-access-token:${GH_PAT_WRITE}@github.com/aircunza/github-readme-stats.git
+          git remote set-url origin https://x-access-token:${GH_TOKEN}@github.com/aircunza/github-readme-stats.git
           git push origin HEAD:main
         env:
-          GH_PAT_WRITE: ${{ secrets.GH_PAT_WRITE }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
