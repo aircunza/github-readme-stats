@@ -1,72 +1,85 @@
-import { Octokit } from "octokit";
-import fs from "fs";
+const { Octokit } = require("octokit");
 
-const octokit = new Octokit({
-  auth: process.env.GH_TOKEN,
-});
+async function main() {
+  const token = process.env.GH_TOKEN;
+  if (!token) {
+    console.error("GH_TOKEN no está definido");
+    process.exit(1);
+  }
 
-const username = "TU_USUARIO"; // Cambialo por tu usuario real
+  const octokit = new Octokit({ auth: token });
 
-async function getStats() {
-  const repos = await octokit.paginate(octokit.rest.repos.listForAuthenticatedUser, {
+  // Obtener repos de usuario (públicos y privados)
+  const reposResponse = await octokit.request("GET /user/repos", {
     visibility: "all",
     affiliation: "owner",
     per_page: 100,
   });
+
+  const repos = reposResponse.data;
 
   let totalCommits = 0;
   let totalPRs = 0;
   let totalIssues = 0;
 
   for (const repo of repos) {
+    const { owner, name } = repo;
+
+    // Obtener commits (solo en la rama principal, por simplicidad)
     try {
-      const contribs = await octokit.rest.repos.getContributorsStats({
-        owner: repo.owner.login,
-        repo: repo.name,
-      });
+      const commitsResp = await octokit.request(
+        "GET /repos/{owner}/{repo}/commits",
+        {
+          owner: owner.login,
+          repo: name,
+          per_page: 100,
+        }
+      );
+      totalCommits += commitsResp.data.length;
+    } catch {}
 
-      const userContrib = contribs.data.find(c => c.author?.login === username);
-      if (userContrib) {
-        totalCommits += userContrib.total;
-      }
-    } catch (e) {
-      // Ignorar errores, stats no disponibles en repos sin actividad
-    }
+    // Obtener PRs
+    try {
+      const prsResp = await octokit.request(
+        "GET /repos/{owner}/{repo}/pulls",
+        {
+          owner: owner.login,
+          repo: name,
+          state: "all",
+          per_page: 100,
+        }
+      );
+      totalPRs += prsResp.data.length;
+    } catch {}
 
-    const prs = await octokit.paginate(octokit.rest.pulls.list, {
-      owner: repo.owner.login,
-      repo: repo.name,
-      state: "all",
-      per_page: 100,
-    });
-    totalPRs += prs.filter(pr => pr.user.login === username).length;
-
-    const issues = await octokit.paginate(octokit.rest.issues.listForRepo, {
-      owner: repo.owner.login,
-      repo: repo.name,
-      state: "all",
-      per_page: 100,
-    });
-    totalIssues += issues.filter(issue => issue.user.login === username).length;
+    // Obtener Issues
+    try {
+      const issuesResp = await octokit.request(
+        "GET /repos/{owner}/{repo}/issues",
+        {
+          owner: owner.login,
+          repo: name,
+          state: "all",
+          per_page: 100,
+        }
+      );
+      // Filtramos para excluir PRs (las issues que no son PRs)
+      const onlyIssues = issuesResp.data.filter((i) => !i.pull_request);
+      totalIssues += onlyIssues.length;
+    } catch {}
   }
 
-  return { totalCommits, totalPRs, totalIssues };
-}
+  // Aquí puedes imprimir o guardar los datos donde quieras
+  console.log(`Commits: ${totalCommits}`);
+  console.log(`Pull Requests: ${totalPRs}`);
+  console.log(`Issues: ${totalIssues}`);
 
-async function main() {
-  const stats = await getStats();
-
-  const data = `
-# GitHub Stats for ${username}
-
-- Total commits: ${stats.totalCommits}
-- Total PRs: ${stats.totalPRs}
-- Total issues: ${stats.totalIssues}
-`;
-
-  fs.mkdirSync("public", { recursive: true });
-  fs.writeFileSync("public/stats.md", data);
-  console.log("Stats generated:", stats);
+  // Por ejemplo, guardar en un archivo JSON para luego usar en el README
+  const fs = require("fs");
+  fs.writeFileSync(
+    "./stats.json",
+    JSON.stringify({ totalCommits, totalPRs, totalIssues }, null, 2)
+  );
 }
 
 main();
