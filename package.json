@@ -1,1 +1,11 @@
+{
+  "name": "github-readme-stats",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "node get-stats.js"
+  },
+  "dependencies": {
+    "octokit": "^2.0.0"
+  }
+}
 
