@@ -1,7 +1,7 @@
 <svg width="400" height="110" xmlns="http://www.w3.org/2000/svg" style="font-family: Arial, sans-serif;">
     <rect width="400" height="110" fill="#0d1117" rx="10"/>
     <text x="20" y="30" fill="#c9d1d9" font-size="18">GitHub Stats for aircunza</text>
-    <text x="20" y="60" fill="#58a6ff" font-size="16">📝 Total Commits: 161</text>
-    <text x="20" y="80" fill="#58a6ff" font-size="16">🔀 Total PRs: 1</text>
-    <text x="20" y="100" fill="#58a6ff" font-size="16">❗ Total Issues: 1</text>
+    <text x="20" y="60" fill="#58a6ff" font-size="16">📝 Total Commits: 821</text>
+    <text x="20" y="80" fill="#58a6ff" font-size="16">🔀 Total PRs: 25</text>
+    <text x="20" y="100" fill="#58a6ff" font-size="16">❗ Total Issues: 6</text>
   </svg>
