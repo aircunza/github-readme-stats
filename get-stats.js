@@ -122,7 +122,7 @@ const svg = `
   </g>
 
   <!-- Moved circle to x=345 for margin -->
-  <g transform="translate(345, 40)">
+  <g transform="translate(280, 40)">
     <circle cx="50" cy="50" r="40" stroke="#0F2F5A" stroke-width="6" fill="none"/>
     <circle
       cx="50"
