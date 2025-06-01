@@ -6,7 +6,7 @@ const octokit = new Octokit({
 });
 
 async function getAllRepos(owner) {
-  const repos = [];
+  let repos = [];
   let page = 1;
   while (true) {
     const { data } = await octokit.rest.repos.listForUser({
@@ -14,57 +14,74 @@ async function getAllRepos(owner) {
       per_page: 100,
       page,
     });
-    if (data.length === 0) break;
-    repos.push(...data);
+    repos = repos.concat(data);
+    if (data.length < 100) break;
     page++;
   }
   return repos;
 }
 
 async function getRepoStats(owner, repo) {
-  // Aquí puedes agregar las llamadas para commits, issues, PRs si quieres (simplificado)
-  // Por ejemplo, contar commits por repo:
-  const commits = await octokit.rest.repos.listCommits({
+  // commits count
+  const commitsResp = await octokit.rest.repos.listCommits({
     owner,
     repo,
     per_page: 1,
   });
-  const totalCommits = commits.headers['link'] ? 
-    parseInt(commits.headers['link'].match(/&page=(\d+)>; rel="last"/)[1]) * 100 : commits.data.length;
+  const commits = commitsResp.headers.link
+    ? Number(commitsResp.headers.link.match(/&page=(\d+)>; rel="last"/)[1])
+    : commitsResp.data.length;
 
-  // Solo datos básicos para ejemplo
-  return {
-    name: repo,
-    commits: totalCommits || 0,
-    url: `https://github.com/${owner}/${repo}`,
-  };
+  // PRs total
+  const prsResp = await octokit.rest.pulls.list({
+    owner,
+    repo,
+    per_page: 1,
+    state: "all",
+  });
+  const prs = prsResp.headers.link
+    ? Number(prsResp.headers.link.match(/&page=(\d+)>; rel="last"/)[1])
+    : prsResp.data.length;
+
+  // Issues total (incluye issues abiertos y cerrados)
+  const issuesResp = await octokit.rest.issues.listForRepo({
+    owner,
+    repo,
+    per_page: 1,
+    state: "all",
+  });
+  const issues = issuesResp.headers.link
+    ? Number(issuesResp.headers.link.match(/&page=(\d+)>; rel="last"/)[1])
+    : issuesResp.data.length;
+
+  return { commits, prs, issues };
 }
 
 async function main() {
-  const owner = "aircunza";
+  const owner = "tu_usuario"; // Cambia esto por tu usuario GitHub
   const repos = await getAllRepos(owner);
 
-  let svgContent = `<svg width="500" height="${repos.length * 40 + 40}" xmlns="http://www.w3.org/2000/svg" style="font-family: Arial, sans-serif;">
-    <rect width="500" height="${repos.length * 40 + 40}" fill="#0d1117" rx="10" />
-    <text x="20" y="30" fill="#c9d1d9" font-size="20">GitHub Stats for ${owner}</text>`;
+  let totalCommits = 0;
+  let totalPRs = 0;
+  let totalIssues = 0;
 
-  let y = 60;
   for (const repo of repos) {
     const stats = await getRepoStats(owner, repo.name);
-    svgContent += `
-      <a href="${stats.url}" target="_blank">
-        <text x="20" y="${y}" fill="#58a6ff" font-size="14" style="cursor:pointer;">
-          ${stats.name} - Commits: ${stats.commits}
-        </text>
-      </a>
-    `;
-    y += 40;
+    totalCommits += stats.commits;
+    totalPRs += stats.prs;
+    totalIssues += stats.issues;
   }
 
-  svgContent += `</svg>`;
+  const svg = `<svg width="400" height="110" xmlns="http://www.w3.org/2000/svg" style="font-family: Arial, sans-serif;">
+    <rect width="400" height="110" fill="#0d1117" rx="10"/>
+    <text x="20" y="30" fill="#c9d1d9" font-size="18">GitHub Stats for ${owner}</text>
+    <text x="20" y="60" fill="#58a6ff" font-size="16">📝 Total Commits: ${totalCommits}</text>
+    <text x="20" y="80" fill="#58a6ff" font-size="16">🔀 Total PRs: ${totalPRs}</text>
+    <text x="20" y="100" fill="#58a6ff" font-size="16">❗ Total Issues: ${totalIssues}</text>
+  </svg>`;
 
-  fs.writeFileSync("stats.svg", svgContent);
-  console.log("SVG stats file generated successfully!");
+  fs.writeFileSync("stats.svg", svg);
+  console.log("SVG stats file generated!");
 }
 
 main().catch(console.error);
