@@ -27,38 +27,47 @@ async function getAllRepos() {
 }
 
 async function getRepoStats(owner, repo) {
-  const commitsResp = await octokit.rest.repos.listCommits({
-    owner,
-    repo,
-    per_page: 1,
-  });
-  const commits = commitsResp.headers.link
-    ? Number(commitsResp.headers.link.match(/&page=(\d+)>; rel="last"/)?.[1] ?? 1)
-    : commitsResp.data.length;
+  try {
+    const commitsResp = await octokit.rest.repos.listCommits({
+      owner,
+      repo,
+      per_page: 1,
+    });
+    const commits = commitsResp.headers.link
+      ? Number(commitsResp.headers.link.match(/&page=(\d+)>; rel="last"/)?.[1] ?? 1)
+      : commitsResp.data.length;
 
-  const prsResp = await octokit.rest.pulls.list({
-    owner,
-    repo,
-    per_page: 1,
-    state: "all",
-  });
-  const prs = prsResp.headers.link
-    ? Number(prsResp.headers.link.match(/&page=(\d+)>; rel="last"/)?.[1] ?? 1)
-    : prsResp.data.length;
+    const prsResp = await octokit.rest.pulls.list({
+      owner,
+      repo,
+      per_page: 1,
+      state: "all",
+    });
+    const prs = prsResp.headers.link
+      ? Number(prsResp.headers.link.match(/&page=(\d+)>; rel="last"/)?.[1] ?? 1)
+      : prsResp.data.length;
 
-  const issuesResp = await octokit.rest.issues.listForRepo({
-    owner,
-    repo,
-    per_page: 1,
-    state: "all",
-  });
-  const issues = issuesResp.headers.link
-    ? Number(issuesResp.headers.link.match(/&page=(\d+)>; rel="last"/)?.[1] ?? 1)
-    : issuesResp.data.length;
+    const issuesResp = await octokit.rest.issues.listForRepo({
+      owner,
+      repo,
+      per_page: 1,
+      state: "all",
+    });
+    const issues = issuesResp.headers.link
+      ? Number(issuesResp.headers.link.match(/&page=(\d+)>; rel="last"/)?.[1] ?? 1)
+      : issuesResp.data.length;
 
-  return { commits, prs, issues };
+    return { commits, prs, issues };
+  } catch (error) {
+    // Si el repositorio está vacío (error 409), retorna 0 para todo
+    if (error.status === 409) {
+      console.warn(`Repo ${repo} is empty, skipping stats.`);
+      return { commits: 0, prs: 0, issues: 0 };
+    }
+    // Para otros errores, re-lanzar
+    throw error;
+  }
 }
-
 
 async function main() {
   const owner = await getAuthenticatedUsername();
