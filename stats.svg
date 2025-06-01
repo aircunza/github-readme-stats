@@ -17,42 +17,39 @@
   <text x="30" y="40" class="title">My GitHub Statistics</text>
 
   <!-- Items list -->
-  <!-- Commit -->
   <g transform="translate(30, 60)">
     <circle class="icon" cx="10" cy="6" r="6" />
-    <path class="bg" d="M7 5 L10 10 L13 5 Z" fill="#1EBC6B" /> <!-- A simple clock arrow shape -->
+    <path d="M7 5 L10 10 L13 5 Z" fill="#1EBC6B" /> <!-- clock arrow -->
     <text class="label" x="30" y="10">Total Commits:</text>
-    <text class="value" x="180" y="10" text-anchor="end">825</text>
+    <text class="value" x="180" y="10" text-anchor="end">827</text>
   </g>
 
-  <!-- Issues -->
   <g transform="translate(30, 90)">
     <circle class="icon" cx="10" cy="6" r="6" />
-    <path d="M10 2 A4 4 0 1 1 9.99 2 Z M9 6 L11 6 L10 11 Z" fill="#1EBC6B"/> <!-- simple exclamation icon -->
+    <path d="M10 2 A4 4 0 1 1 9.99 2 Z M9 6 L11 6 L10 11 Z" fill="#1EBC6B"/> <!-- exclamation -->
     <text class="label" x="30" y="10">Total Issues:</text>
     <text class="value" x="180" y="10" text-anchor="end">6</text>
   </g>
 
-  <!-- Pull Requests -->
   <g transform="translate(30, 120)">
     <circle class="icon" cx="10" cy="6" r="6" />
-    <path d="M8 5 L12 5 L10 9 Z" fill="#1EBC6B"/> <!-- simple book icon arrow -->
+    <path d="M8 5 L12 5 L10 9 Z" fill="#1EBC6B"/> <!-- book arrow -->
     <text class="label" x="30" y="10">Total PRs:</text>
     <text class="value" x="180" y="10" text-anchor="end">25</text>
   </g>
 
-  <!-- Right circle graphic -->
-  <g transform="translate(320, 45)">
-    <circle cx="50" cy="50" r="44" stroke="#0F2F5A" stroke-width="8" fill="none"/>
+  <!-- Right circle graphic ajustado dentro del rectángulo -->
+  <g transform="translate(340, 40)">
+    <circle cx="50" cy="50" r="40" stroke="#0F2F5A" stroke-width="6" fill="none"/>
     <circle
       cx="50"
       cy="50"
-      r="44"
+      r="40"
       stroke="#1E90FF"
-      stroke-width="8"
+      stroke-width="6"
       stroke-linecap="round"
-      stroke-dasharray="276.46"
-      stroke-dashoffset="110"
+      stroke-dasharray="251.2"
+      stroke-dashoffset="100"
       fill="none"
       transform="rotate(-90 50 50)"
     />
