@@ -1,18 +1,20 @@
-name: test-push
+name: push-test
 
 on:
   workflow_dispatch:
 
 jobs:
-  push-test:
+  push:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          persist-credentials: false  # 👈 esto es clave
 
-      - name: Modify test file
+      - name: Modify file
         run: echo "updated on $(date)" > test.txt
 
       - name: Git config
@@ -20,7 +22,7 @@ jobs:
           git config user.name "aircunza"
           git config user.email "your_email@example.com"
 
-      - name: Set up PAT authentication
+      - name: Set remote with PAT
         run: git remote set-url origin https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}
 
       - name: Commit and push
