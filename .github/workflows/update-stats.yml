@@ -32,7 +32,7 @@ jobs:
           git config user.email "github-actions@github.com"
           git add stats.html
           git commit -m "Update GitHub stats page" || echo "No changes to commit"
-          git remote set-url origin https://x-access-token:${GH_TOKEN}@github.com/aircunza/github-readme-stats.git
-          git push origin HEAD:main
+          git push https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/aircunza/github-readme-stats.git HEAD:main
+
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
