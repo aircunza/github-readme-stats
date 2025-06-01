@@ -22,8 +22,10 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Run stats script
-        run: node get-stats.js
+      - name: Generate stats SVG
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}  # Tu token personal (PAT), no GITHUB_TOKEN
+        run: npm run start
 
       - name: Commit & push changes
         run: |
