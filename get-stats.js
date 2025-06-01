@@ -10,14 +10,14 @@ async function getAuthenticatedUsername() {
   return data.login;
 }
 
-async function getAllRepos(owner) {
+async function getAllRepos() {
   let repos = [];
   let page = 1;
   while (true) {
-    const { data } = await octokit.rest.repos.listForUser({
-      username: owner,
+    const { data } = await octokit.rest.repos.listForAuthenticatedUser({
       per_page: 100,
       page,
+      visibility: "all", // incluye públicos y privados
     });
     repos = repos.concat(data);
     if (data.length < 100) break;
@@ -26,7 +26,7 @@ async function getAllRepos(owner) {
   return repos;
 }
 
-async function getRepoStats(owner, repo) {
+async function getRepoStats(owner: string, repo: string) {
   const commitsResp = await octokit.rest.repos.listCommits({
     owner,
     repo,
@@ -60,15 +60,15 @@ async function getRepoStats(owner, repo) {
 }
 
 async function main() {
-  const owner = await getAuthenticatedUsername(); // reemplaza si quieres usar tu usuario directo
-  const repos = await getAllRepos(owner);
+  const owner = await getAuthenticatedUsername();
+  const repos = await getAllRepos();
 
   let totalCommits = 0;
   let totalPRs = 0;
   let totalIssues = 0;
 
   for (const repo of repos) {
-    const stats = await getRepoStats(owner, repo.name);
+    const stats = await getRepoStats(repo.owner.login, repo.name);
     totalCommits += stats.commits;
     totalPRs += stats.prs;
     totalIssues += stats.issues;
