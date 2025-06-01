@@ -28,46 +28,70 @@ async function getAllRepos() {
 
 async function getRepoStats(owner, repo) {
   try {
-    const commitsResp = await octokit.rest.repos.listCommits({
-      owner,
-      repo,
-      per_page: 1,
-    });
-    const commits = commitsResp.headers.link
-      ? Number(commitsResp.headers.link.match(/&page=(\d+)>; rel="last"/)?.[1] ?? 1)
-      : commitsResp.data.length;
+    // Count all commits
+    let commitPage = 1;
+    let totalCommits = 0;
+    while (true) {
+      const { data } = await octokit.rest.repos.listCommits({
+        owner,
+        repo,
+        per_page: 100,
+        page: commitPage,
+      });
+      totalCommits += data.length;
+      if (data.length < 100) break;
+      commitPage++;
+    }
 
-    const prsResp = await octokit.rest.pulls.list({
-      owner,
-      repo,
-      per_page: 1,
-      state: "all",
-    });
-    const prs = prsResp.headers.link
-      ? Number(prsResp.headers.link.match(/&page=(\d+)>; rel="last"/)?.[1] ?? 1)
-      : prsResp.data.length;
+    // Count all PRs (state: all)
+    let prPage = 1;
+    let totalPRs = 0;
+    while (true) {
+      const { data } = await octokit.rest.pulls.list({
+        owner,
+        repo,
+        per_page: 100,
+        page: prPage,
+        state: "all",
+      });
+      totalPRs += data.length;
+      if (data.length < 100) break;
+      prPage++;
+    }
 
-    const issuesResp = await octokit.rest.issues.listForRepo({
-      owner,
-      repo,
-      per_page: 1,
-      state: "all",
-    });
-    const issues = issuesResp.headers.link
-      ? Number(issuesResp.headers.link.match(/&page=(\d+)>; rel="last"/)?.[1] ?? 1)
-      : issuesResp.data.length;
+    // Count all issues (including PRs)
+    let issuePage = 1;
+    let totalIssues = 0;
+    while (true) {
+      const { data } = await octokit.rest.issues.listForRepo({
+        owner,
+        repo,
+        per_page: 100,
+        page: issuePage,
+        state: "all",
+      });
+      totalIssues += data.length;
+      if (data.length < 100) break;
+      issuePage++;
+    }
 
-    return { commits, prs, issues };
+    return {
+      commits: totalCommits,
+      prs: totalPRs,
+      issues: totalIssues,
+    };
   } catch (error) {
-    // Si el repositorio está vacío (error 409), retorna 0 para todo
+    // Repo vacío (sin commits) lanza 409
     if (error.status === 409) {
-      console.warn(`Repo ${repo} is empty, skipping stats.`);
+      console.warn(`⚠️ Repo ${repo} is empty, skipping stats.`);
       return { commits: 0, prs: 0, issues: 0 };
     }
-    // Para otros errores, re-lanzar
+
+    // Otros errores: relanzar
     throw error;
   }
 }
+
 
 async function main() {
   const owner = await getAuthenticatedUsername();
