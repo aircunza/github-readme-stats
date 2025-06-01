@@ -1,86 +1,143 @@
 import { Octokit } from "octokit";
 import fs from "fs";
+import path from "path";
 
-const octokit = new Octokit({
-  auth: process.env.GH_TOKEN,
-});
+const octokit = new Octokit({ auth: process.env.GH_TOKEN });
 
-async function getTotalCounts(owner) {
-  // Obtener todos los repos del usuario (públicos y privados)
-  const reposResponse = await octokit.rest.repos.listForUser({
-    username: owner,
-    per_page: 100,
-  });
+async function getAllRepos(owner) {
+  let repos = [];
+  let page = 1;
 
-  const repos = reposResponse.data;
+  while (true) {
+    const response = await octokit.rest.repos.listForUser({
+      username: owner,
+      per_page: 100,
+      page,
+    });
+    repos = repos.concat(response.data);
+    if (response.data.length < 100) break;
+    page++;
+  }
+  return repos;
+}
 
-  let totalCommits = 0;
-  let totalIssues = 0;
-  let totalPRs = 0;
+async function getCommitCount(owner, repo, branch) {
+  let count = 0;
+  let page = 1;
 
-  for (const repo of repos) {
-    // commits: número aproximado basado en paginación
-    try {
-      const commitsRes = await octokit.rest.repos.listCommits({
-        owner,
-        repo: repo.name,
-        per_page: 1,
-      });
-      const commitsCount = commitsRes.headers.link
-        ? parseInt(commitsRes.headers.link.match(/&page=(\d+)>; rel="last"/)[1])
-        : commitsRes.data.length;
-      totalCommits += commitsCount;
-    } catch (e) {
-      // repos vacíos o sin commits
-      console.log(`No commits for repo ${repo.name}`);
-    }
-
-    // issues count (todos, abiertos y cerrados, solo issues no PR)
-    try {
-      const issuesRes = await octokit.rest.search.issuesAndPullRequests({
-        q: `repo:${owner}/${repo.name} is:issue`,
-        per_page: 1,
-      });
-      totalIssues += issuesRes.data.total_count;
-    } catch (e) {
-      console.log(`Error getting issues for repo ${repo.name}`);
-    }
-
-    // PRs count (todos, abiertos y cerrados)
-    try {
-      const prsRes = await octokit.rest.search.issuesAndPullRequests({
-        q: `repo:${owner}/${repo.name} is:pr`,
-        per_page: 1,
-      });
-      totalPRs += prsRes.data.total_count;
-    } catch (e) {
-      console.log(`Error getting PRs for repo ${repo.name}`);
-    }
+  while (true) {
+    const response = await octokit.rest.repos.listCommits({
+      owner,
+      repo,
+      sha: branch,
+      per_page: 100,
+      page,
+    });
+    count += response.data.length;
+    if (response.data.length < 100) break;
+    page++;
   }
 
-  return { totalCommits, totalIssues, totalPRs };
+  return count;
+}
+
+async function getIssuesCount(owner, repo, state) {
+  let count = 0;
+  let page = 1;
+
+  while (true) {
+    const response = await octokit.rest.issues.listForRepo({
+      owner,
+      repo,
+      state,
+      per_page: 100,
+      page,
+    });
+    // Excluir pull requests (issues incluye PRs)
+    const issuesOnly = response.data.filter(issue => !issue.pull_request);
+    count += issuesOnly.length;
+    if (response.data.length < 100) break;
+    page++;
+  }
+
+  return count;
+}
+
+async function getPRsCount(owner, repo, state) {
+  let count = 0;
+  let page = 1;
+
+  while (true) {
+    const response = await octokit.rest.pulls.list({
+      owner,
+      repo,
+      state,
+      per_page: 100,
+      page,
+    });
+    count += response.data.length;
+    if (response.data.length < 100) break;
+    page++;
+  }
+
+  return count;
 }
 
 async function main() {
-  const owner = "aircunza"; // Cambia a tu usuario
+  const owner = "aircunza";
 
-  const stats = await getTotalCounts(owner);
+  console.log("Fetching repos...");
+  const repos = await getAllRepos(owner);
 
-  // Crear SVG básico
-  const svg = `
-<svg width="450" height="130" xmlns="http://www.w3.org/2000/svg" style="font-family: Arial, sans-serif;">
-  <rect width="450" height="130" fill="#0d1117" rx="10"/>
-  <text x="20" y="35" fill="#c9d1d9" font-size="20">GitHub Stats for ${owner}</text>
+  let totalCommits = 0;
+  let totalIssuesOpen = 0;
+  let totalIssuesClosed = 0;
+  let totalPRsOpen = 0;
+  let totalPRsClosed = 0;
 
-  <text x="20" y="65" fill="#58a6ff" font-size="16" cursor="default">🔥 Total commits: ${stats.totalCommits}</text>
-  <text x="20" y="90" fill="#58a6ff" font-size="16" cursor="default">🐞 Total issues: ${stats.totalIssues}</text>
-  <text x="20" y="115" fill="#58a6ff" font-size="16" cursor="default">🔀 Total pull requests: ${stats.totalPRs}</text>
-</svg>
+  for (const repo of repos) {
+    const defaultBranch = repo.default_branch;
+
+    console.log(`Processing repo: ${repo.name}`);
+
+    const commits = await getCommitCount(owner, repo.name, defaultBranch);
+    const issuesOpen = await getIssuesCount(owner, repo.name, "open");
+    const issuesClosed = await getIssuesCount(owner, repo.name, "closed");
+    const prsOpen = await getPRsCount(owner, repo.name, "open");
+    const prsClosed = await getPRsCount(owner, repo.name, "closed");
+
+    totalCommits += commits;
+    totalIssuesOpen += issuesOpen;
+    totalIssuesClosed += issuesClosed;
+    totalPRsOpen += prsOpen;
+    totalPRsClosed += prsClosed;
+  }
+
+  // Crear SVG
+  const svgContent = `
+  <svg width="500" height="160" xmlns="http://www.w3.org/2000/svg" style="font-family: Arial, sans-serif;">
+    <rect width="500" height="160" fill="#0d1117" rx="10" />
+    <text x="20" y="30" fill="#c9d1d9" font-size="22" font-weight="bold">GitHub Stats for ${owner}</text>
+    
+    <text x="20" y="65" fill="#58a6ff" font-size="18" font-weight="bold">Total commits:</text>
+    <text x="180" y="65" fill="#8b949e" font-size="18">${totalCommits.toLocaleString()}</text>
+
+    <text x="20" y="95" fill="#58a6ff" font-size="18" font-weight="bold">Issues (Open / Closed):</text>
+    <text x="280" y="95" fill="#8b949e" font-size="18">${totalIssuesOpen.toLocaleString()} / ${totalIssuesClosed.toLocaleString()}</text>
+
+    <text x="20" y="125" fill="#58a6ff" font-size="18" font-weight="bold">PRs (Open / Closed):</text>
+    <text x="240" y="125" fill="#8b949e" font-size="18">${totalPRsOpen.toLocaleString()} / ${totalPRsClosed.toLocaleString()}</text>
+  </svg>
   `;
 
-  // Guardar en archivo
-  fs.writeFileSync("docs/stats.svg", svg.trim());
-  console.log("SVG stats file generated successfully!");
+  const outputDir = path.resolve("docs");
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir, { recursive: true });
+  }
+  const outputFile = path.join(outputDir, "stats.svg");
+  fs.writeFileSync(outputFile, svgContent);
+
+  console.log("SVG stats file generated in docs/stats.svg");
 }
 
-main();
+main().catch(console.error);
