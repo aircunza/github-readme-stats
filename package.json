@@ -1,6 +1,7 @@
 {
   "name": "github-readme-stats",
   "version": "1.0.0",
+  "type": "module",
   "scripts": {
     "start": "node get-stats.js"
   },
@@ -8,4 +9,3 @@
     "octokit": "^2.0.0"
   }
 }
-
