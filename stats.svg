@@ -18,21 +18,21 @@
     <circle class="icon" cx="10" cy="6" r="6" />
     <path d="M7 5 L10 10 L13 5 Z" fill="#1EBC6B" />
     <text class="label" x="30" y="10">Total Commits:</text>
-    <text class="value" x="180" y="10" text-anchor="end">838</text>
+    <text class="value" x="180" y="10" text-anchor="end">851</text>
   </g>
 
   <g transform="translate(30, 90)">
     <circle class="icon" cx="10" cy="6" r="6" />
     <path d="M10 2 A4 4 0 1 1 9.99 2 Z M9 6 L11 6 L10 11 Z" fill="#1EBC6B"/>
     <text class="label" x="30" y="10">Total Issues:</text>
-    <text class="value" x="180" y="10" text-anchor="end">33</text>
+    <text class="value" x="180" y="10" text-anchor="end">45</text>
   </g>
 
   <g transform="translate(30, 120)">
     <circle class="icon" cx="10" cy="6" r="6" />
     <path d="M8 5 L12 5 L10 9 Z" fill="#1EBC6B"/>
     <text class="label" x="30" y="10">Total PRs:</text>
-    <text class="value" x="180" y="10" text-anchor="end">26</text>
+    <text class="value" x="180" y="10" text-anchor="end">32</text>
   </g>
 
   <!-- Moved circle to x=345 for margin -->
